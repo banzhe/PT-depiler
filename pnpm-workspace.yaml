@@ -1,5 +1,10 @@
-patchedDependencies:
-  git-rev-sync: patches/git-rev-sync.patch
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - spawn-sync
 
 overrides:
-  "git-rev-sync>shelljs": "0.10.0"
+  git-rev-sync>shelljs: 0.10.0
+
+patchedDependencies:
+  git-rev-sync: patches/git-rev-sync.patch
