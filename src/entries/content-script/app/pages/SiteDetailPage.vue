@@ -20,6 +20,9 @@ const enabledDownloadersBySite = computed(() => {
   return metadataStore.getEnabledDownloadersBySite(ptdData.siteId ?? "");
 });
 
+/** 当前站点的默认下载器（未配置时回退全局默认下载器） */
+const hasDefaultDownloader = computed(() => !!metadataStore.getDefaultDownloader([ptdData.siteId])?.id);
+
 async function parseDetailPage() {
   const parsedResult = await siteInstance.value?.transformDetailPage(document);
 
@@ -81,7 +84,7 @@ function handleSearch() {
   />
   <SpeedDialBtn
     key="download_default"
-    v-if="metadataStore.defaultDownloader?.id"
+    v-if="hasDefaultDownloader"
     :disabled="enabledDownloadersBySite.length === 0"
     color="light-blue"
     icon="mdi-download"

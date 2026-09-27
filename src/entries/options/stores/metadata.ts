@@ -14,6 +14,7 @@ import {
 
 import {
   IBackupServerMetadata,
+  IDefaultDownloaderConfig,
   IDownloaderMetadata,
   IMediaServerMetadata,
   IMetadataPiniaStorageSchema,
@@ -45,6 +46,7 @@ export const useMetadataStore = defineStore("metadata", {
 
     defaultSolutionId: "default",
     defaultDownloader: {},
+    siteDefaultDownloaders: {},
 
     lastSearchFilter: "",
     lastUserInfo: {},
@@ -326,6 +328,30 @@ export const useMetadataStore = defineStore("metadata", {
       };
     },
 
+    /**
+     * 获取当前下载操作应使用的默认下载器配置：
+     * 1. 如果涉及的站点恰好只有一个，且该站点配置了默认下载器（并且该下载器存在且已启用），则使用站点配置（整体覆盖 folder/tags）
+     * 2. 否则回退到全局默认下载器配置
+     */
+    getDefaultDownloader(state) {
+      return (siteIds: (TSiteID | undefined)[] = []): IDefaultDownloaderConfig | undefined => {
+        const uniqueSiteIds = [...new Set(siteIds.filter((x): x is TSiteID => !!x))];
+
+        if (uniqueSiteIds.length === 1) {
+          const siteDefaultDownloader = state.siteDefaultDownloaders?.[uniqueSiteIds[0]];
+          const siteDownloaderId = siteDefaultDownloader?.id;
+          if (siteDownloaderId) {
+            const downloader = state.downloaders[siteDownloaderId];
+            if (downloader?.enabled) {
+              return siteDefaultDownloader;
+            }
+          }
+        }
+
+        return state.defaultDownloader?.id ? state.defaultDownloader : undefined;
+      };
+    },
+
     getMediaServerIds(state) {
       return Object.keys(state.mediaServers);
     },
@@ -374,6 +400,7 @@ export const useMetadataStore = defineStore("metadata", {
       const { reBuildMap = true } = options ?? {};
 
       delete this.sites[siteId];
+      delete this.siteDefaultDownloaders[siteId]; // 站点被移除时，同步清理其默认下载器配置
 
       if (reBuildMap) {
         await this.buildSiteMapCache(false);
@@ -478,6 +505,21 @@ export const useMetadataStore = defineStore("metadata", {
     async addDownloader(downloaderConfig: IDownloaderMetadata) {
       delete downloaderConfig.valid;
       this.downloaders[downloaderConfig.id] = downloaderConfig;
+      await this.$save();
+    },
+
+    /**
+     * 整体更新各站点的默认下载器配置，无 id 的条目视为「使用全局默认下载器」，不进行存储
+     */
+    async setSiteDefaultDownloaders(configs: Record<TSiteID, IDefaultDownloaderConfig>) {
+      const newConfigs: Record<TSiteID, IDefaultDownloaderConfig> = {};
+      for (const [siteId, config] of Object.entries(configs)) {
+        if (config?.id) {
+          newConfigs[siteId] = { id: config.id, folder: config.folder ?? "", tags: config.tags ?? "" };
+        }
+      }
+
+      this.siteDefaultDownloaders = newConfigs;
       await this.$save();
     },
 

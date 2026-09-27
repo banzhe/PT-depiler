@@ -119,8 +119,14 @@ export interface IMetadataPiniaStorageSchema {
   // 默认搜索方案
   defaultSolutionId: TSolutionKey | "default";
 
-  // 默认下载器配置
+  // 默认下载器配置（全局）
   defaultDownloader: IDefaultDownloaderConfig;
+
+  /**
+   * 各站点的默认下载器配置，未配置（或配置的下载器不可用）的站点回退到 defaultDownloader
+   * 注意：站点配置为整体覆盖，即站点配置了 id 后，folder/tags 也完全以站点配置为准
+   */
+  siteDefaultDownloaders: Record<TSiteKey, IDefaultDownloaderConfig>;
 
   // 上一次搜索时在结果页面的筛选词，需要启用 configStore.searchEntity.saveLastFilter
   lastSearchFilter?: string;

@@ -747,6 +747,7 @@
     "index": {
       "changeDefaultDownloader": "Default downloader updated successfully. If necessary, please further configure the download path and tags.",
       "editDefaultDownloaderBtn": "Edit Default Downloader",
+      "siteDefaultDownloaderBtn": "Site Default Downloaders",
       "emptyNotice": "Before using the download service, you need to add at least one download server.",
       "remove": {
         "multi": "Are you sure to delete these {count} download servers?",
@@ -770,6 +771,13 @@
       "excludedSitesHint": "If a site is excluded, this downloader will not be shown on the site page (does not apply to the aggregated search page)",
       "noSites": "No sites added yet",
       "title": "Set site filter for downloader [{0}] (exclusion)"
+    },
+    "siteDefault": {
+      "globalDefaultTip": "Current global default downloader: ",
+      "hint": "Set a dedicated default downloader for a site. Sites without a configuration (or whose configured downloader was deleted / disabled) fall back to the global default downloader.",
+      "noEnabledDownloader": "No enabled download server. Please enable at least one in the download server settings first.",
+      "title": "Site Default Downloaders",
+      "useGlobalDefault": "Use global default downloader"
     }
   },
   "SetMediaServer": {

@@ -78,15 +78,15 @@ function startVerification() {
 
   const remembered = configStore.download.saveLastDownloader ? metadataStore.lastKeepUpload : undefined;
   const rememberedDownloaderExists = remembered?.downloaderId && metadataStore.downloaders[remembered.downloaderId];
+
+  // 未记忆历史选择时，使用当前种子所属站点的默认下载器（单站点），否则回退到全局默认下载器
+  const defaultDownloaderConfig = metadataStore.getDefaultDownloader(torrentItems.map((item) => item.site));
+
   selectedDownloaderId.value = rememberedDownloaderExists
     ? remembered.downloaderId!
-    : metadataStore.defaultDownloader?.id || "";
-  savePath.value = rememberedDownloaderExists
-    ? remembered?.savePath || ""
-    : metadataStore.defaultDownloader?.folder || "";
-  torrentLabel.value = rememberedDownloaderExists
-    ? remembered?.label || ""
-    : metadataStore.defaultDownloader?.tags || "";
+    : defaultDownloaderConfig?.id || "";
+  savePath.value = rememberedDownloaderExists ? remembered?.savePath || "" : defaultDownloaderConfig?.folder || "";
+  torrentLabel.value = rememberedDownloaderExists ? remembered?.label || "" : defaultDownloaderConfig?.tags || "";
 
   torrentItems.forEach((item) => {
     const id = crypto.randomUUID();

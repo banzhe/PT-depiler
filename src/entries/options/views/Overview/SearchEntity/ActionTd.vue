@@ -81,12 +81,15 @@ const showKeepUploadDialog = ref(false);
 function openKeepUploadDialog() {
   showKeepUploadDialog.value = true;
 }
+
+/** 当前选中种子应使用的默认下载器（单站点取站点配置，否则回退全局默认） */
+const hasDefaultDownloader = computed(() => !!metadataStore.getDefaultDownloader(torrentItems.map((t) => t.site))?.id);
 </script>
 
 <template>
   <v-btn-group :density="density" class="table-action" color="grey" variant="text">
     <v-btn
-      v-if="metadataStore.defaultDownloader?.id"
+      v-if="hasDefaultDownloader"
       :disabled="torrentItems.length == 0"
       :size="btnSize"
       icon="mdi-download"

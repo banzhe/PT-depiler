@@ -49,6 +49,13 @@ const suggestFolders = computed(() => selectedDownloader.value?.suggestFolders ?
 const suggestTags = computed(() => selectedDownloader.value?.suggestTags ?? []);
 
 const currentSiteIds = computed(() => [...new Set(torrentItems.map((t) => t.site).filter(Boolean))]);
+
+/**
+ * 当前待发送种子应使用的默认下载器配置：
+ * 单站点时优先使用该站点的配置，否则回退到全局默认下载器
+ */
+const defaultDownloaderConfig = computed(() => metadataStore.getDefaultDownloader(currentSiteIds.value));
+
 const enabledDownloadersBySite = computed(() => {
   const ids = currentSiteIds.value;
   if (ids.length === 0) return metadataStore.getEnabledDownloaders;
@@ -124,14 +131,23 @@ function quickSendToDownloader(downloader: IDownloaderMetadata, path: string = "
 function dialogEnter() {
   // 如果是默认下载发送，则直接设置为快速发送到客户端模式
   if (isDefaultSend) {
-    const downloader = metadataStore.downloaders[metadataStore.defaultDownloader.id!];
+    const defaultConfig = defaultDownloaderConfig.value;
+    const downloader = defaultConfig?.id ? metadataStore.downloaders[defaultConfig.id] : undefined;
+
+    // 站点/全局默认下载器可能已被删除，此时提示并放弃发送
+    if (!downloader) {
+      runtimeStore.showSnakebar(t("SentToDownloaderDialog.noDownloader"), { color: "error" });
+      showDialog.value = false;
+      return;
+    }
+
     restoreAddTorrentOptions(downloader);
     quickSendToClient.value = true;
 
     // 加载默认下载器设置中的 folder, tags 信息
     selectedDownloader.value = downloader;
-    addTorrentOptions.value.savePath = metadataStore.defaultDownloader.folder ?? "";
-    addTorrentOptions.value.label = metadataStore.defaultDownloader.tags ?? "";
+    addTorrentOptions.value.savePath = defaultConfig?.folder ?? "";
+    addTorrentOptions.value.label = defaultConfig?.tags ?? "";
 
     // 直接调用发送函数
     sendToDownloader();

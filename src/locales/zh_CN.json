@@ -747,6 +747,7 @@
     "index": {
       "changeDefaultDownloader": "更新默认下载服务器成功！如有必要请进一步设置下载地址和标签。",
       "editDefaultDownloaderBtn": "默认下载服务器设置",
+      "siteDefaultDownloaderBtn": "站点默认下载服务器设置",
       "emptyNotice": "在使用推送服务之前，您至少需要添加一个下载服务器。",
       "remove": {
         "multi": "你确定删除这{count}个下载服务器吗？",
@@ -770,6 +771,13 @@
       "excludedSitesHint": "如果站点被排除，则在站点页面不会显示该下载器（在助手聚合搜索页面不生效）",
       "noSites": "暂无已添加的站点",
       "title": "设置下载器 [{0}] 的站点过滤（排除方式）"
+    },
+    "siteDefault": {
+      "globalDefaultTip": "当前全局默认下载服务器：",
+      "hint": "为站点单独指定默认下载服务器；未配置（或所配置的下载服务器已被删除 / 停用）的站点将使用全局默认下载服务器。",
+      "noEnabledDownloader": "当前没有已启用的下载服务器，请先在下载服务器设置中启用至少一个。",
+      "title": "站点默认下载服务器设置",
+      "useGlobalDefault": "使用全局默认下载服务器"
     }
   },
   "SetMediaServer": {

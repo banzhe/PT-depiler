@@ -17,6 +17,7 @@ import AddDialog from "./AddDialog.vue";
 import EditDialog from "./EditDialog.vue";
 import PathAndTagSuggestDialog from "./PathAndTagSuggestDialog.vue";
 import SiteFilterDialog from "./SiteFilterDialog.vue";
+import SiteDefaultDownloaderDialog from "./SiteDefaultDownloaderDialog.vue";
 import DefaultDownloaderEditDialog from "./DefaultDownloaderEditDialog.vue";
 
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
@@ -30,9 +31,29 @@ const configStore = useConfigStore();
 const showAddDialog = ref<boolean>(false);
 const showEditDialog = ref<boolean>(false);
 const showDefaultDownloaderEditDialog = ref<boolean>(false);
+const showSiteDefaultDownloaderDialog = ref<boolean>(false);
 const showSiteFilterDialog = ref<boolean>(false);
 const showPathAndTagSuggestDialog = ref<boolean>(false);
 const showDeleteDialog = ref<boolean>(false);
+
+/**
+ * 被引用的下载器（全局默认下载器 + 任一站点的默认下载器）不允许删除，
+ * 以免对应站点在发送种子时解析不到下载器
+ */
+const referencedDownloaderIds = computed(() => {
+  const ids = new Set<TDownloaderKey>();
+  if (metadataStore.defaultDownloader?.id) {
+    ids.add(metadataStore.defaultDownloader.id);
+  }
+  for (const config of Object.values(metadataStore.siteDefaultDownloaders ?? {})) {
+    if (config?.id) {
+      ids.add(config.id);
+    }
+  }
+  return ids;
+});
+
+const isReferencedDownloader = (downloaderId: TDownloaderKey) => referencedDownloaderIds.value.has(downloaderId);
 
 const downloaderTypeCount = computed(() => countBy(metadataStore.getDownloaders, (x) => x.type));
 
@@ -105,7 +126,8 @@ function editDownloaderSiteFilter(downloaderId: TDownloaderKey) {
 
 const toDeleteIds = ref<TDownloaderKey[]>([]);
 function deleteDownloader(downloaderId: TDownloaderKey[]) {
-  toDeleteIds.value = downloaderId.filter((i) => i !== metadataStore.defaultDownloader?.id); // 默认下载器不允许删除（防止多选时选中）
+  // 被全局或站点默认下载器引用的下载器不允许删除（防止多选时选中）
+  toDeleteIds.value = downloaderId.filter((i) => !isReferencedDownloader(i));
   showDeleteDialog.value = true;
 }
 
@@ -137,6 +159,14 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
           color="indigo"
           icon="mdi-auto-download"
           @click="showDefaultDownloaderEditDialog = true"
+        />
+
+        <NavButton
+          :disabled="metadataStore.getDownloaders.length == 0"
+          :text="t('SetDownloader.index.siteDefaultDownloaderBtn')"
+          color="cyan-darken-2"
+          icon="mdi-format-list-checks"
+          @click="showSiteDefaultDownloaderDialog = true"
         />
 
         <v-spacer />
@@ -217,13 +247,8 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
       </template>
 
       <template #item.name="{ item }">
-        <v-icon
-          v-if="item.id == metadataStore.defaultDownloader?.id"
-          icon="mdi-pin mdi-rotate-45"
-          color="indigo"
-          class="mr-1"
-        />
-        <span class="font-weight-bold" :class="{ 'text-indigo': item.id == metadataStore.defaultDownloader?.id }">
+        <v-icon v-if="isReferencedDownloader(item.id)" icon="mdi-pin mdi-rotate-45" color="indigo" class="mr-1" />
+        <span class="font-weight-bold" :class="{ 'text-indigo': isReferencedDownloader(item.id) }">
           {{ item.name }}
         </span>
       </template>
@@ -305,7 +330,7 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
 
           <v-btn
             :title="t('common.remove')"
-            :disabled="item.id == metadataStore.defaultDownloader?.id /* 默认下载器不允许删除 */"
+            :disabled="isReferencedDownloader(item.id) /* 被全局或站点默认下载器引用，不允许删除 */"
             color="error"
             icon="mdi-delete"
             size="small"
@@ -319,6 +344,7 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
   <AddDialog v-model="showAddDialog" />
   <EditDialog v-model="showEditDialog" :client-id="toEditDownloaderId!" />
   <DefaultDownloaderEditDialog v-model="showDefaultDownloaderEditDialog" />
+  <SiteDefaultDownloaderDialog v-model="showSiteDefaultDownloaderDialog" />
   <SiteFilterDialog v-model="showSiteFilterDialog" :client-id="toEditDownloaderId!" />
   <PathAndTagSuggestDialog v-model="showPathAndTagSuggestDialog" :client-id="toEditDownloaderId!" />
   <DeleteDialog v-model="showDeleteDialog" :to-delete-ids="toDeleteIds" :confirm-delete="confirmDeleteDownloader" />

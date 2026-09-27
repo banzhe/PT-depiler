@@ -48,6 +48,10 @@ const selectedTorrentsCount = computed(() => selectedTorrentIds.value.length);
 const selectedTorrentsSize = computed(() =>
   selectedTorrents.value.reduce((acc, torrent) => acc + (torrent.size ?? 0), 0),
 );
+const selectedTorrentsSiteIds = computed(() => selectedTorrents.value.map((x) => x.site));
+
+/** 当前选中种子的默认下载器（单站点取站点配置，否则回退全局默认下载器） */
+const hasDefaultDownloader = computed(() => !!metadataStore.getDefaultDownloader(selectedTorrentsSiteIds.value)?.id);
 
 const localDownloadMultiStatus = ref<boolean>(false);
 async function handleLocalDownloadMulti() {
@@ -195,7 +199,7 @@ function enterDialog() {
         />
 
         <NavButton
-          v-if="metadataStore.defaultDownloader?.id"
+          v-if="hasDefaultDownloader"
           key="remote_download_multi_default"
           :disabled="!hasSelectedTorrent"
           color="light-blue"
